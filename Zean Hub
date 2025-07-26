@@ -38,69 +38,97 @@ local Window = Rayfield:CreateWindow({
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local char = LocalPlayer.Character
-local hum = char and char:FindFirstChildOfClass("Humanoid") or nil
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+
+local function GetLocalCharacter()
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    return char
+end
+
+local function GetLocalHumanoid()
+    local char = GetLocalCharacter()
+    return char and char:FindFirstChildOfClass("Humanoid")
+end
+
+local char = GetLocalCharacter()
+local hum = GetLocalHumanoid()
+
+
+local function WaitUntilAlive()
+    repeat
+        task.wait(0.25)
+        local hum = GetLocalHumanoid()
+    until hum and hum.Health > 0
+end
+
 
 local Tab = Window:CreateTab("Main", 4483362458)
 local Tab1 = Window:CreateTab("Misc", 4483362458)
 
 Tab:CreateSection("Main")
 
-Tab:CreateSlider({
-    Name = "JumpPower",
-    Range = {0, 500},
-    Increment = 10,
-    Suffix = "JumpPower",
-    CurrentValue = 10,
-    Flag = "Slider1",
-    Callback = function(Value)
-        if hum then hum.JumpPower = Value 
-
-	if hum.JumpPower ~= Value then
-		while wait() do
-			hum.JumpPower = Value 
-		end
-		end
-	end
-    end
-})
+local DesiredWalkSpeed = 16
+local DesiredJumpPower = 50
 
 Tab:CreateSlider({
     Name = "WalkSpeed",
     Range = {0, 500},
-    Increment = 10,
-    Suffix = "WalkSpeed",
-    CurrentValue = 10,
-    Flag = "Slider2",
+    Increment = 5,
+    Suffix = "speed",
+    CurrentValue = 16,
     Callback = function(Value)
-        if hum then hum.WalkSpeed = Value end
-
-	if hum.WalkSpeed ~= Value then
-		while wait() do
-			hum.WalkSpeed = Value 
-		end
-	end
+        DesiredWalkSpeed = Value
     end
 })
+
+Tab:CreateSlider({
+    Name = "JumpPower",
+    Range = {0, 500},
+    Increment = 5,
+    Suffix = "jump",
+    CurrentValue = 50,
+    Callback = function(Value)
+        DesiredJumpPower = Value
+    end
+})
+
+RunService.RenderStepped:Connect(function()
+	local hum = GetLocalHumanoid()
+	if hum then
+		if hum.WalkSpeed ~= DesiredWalkSpeed then
+			hum.WalkSpeed = DesiredWalkSpeed
+		end
+		if hum.JumpPower ~= DesiredJumpPower then
+			hum.JumpPower = DesiredJumpPower
+		end
+	end
+end)
+
+local NoClipEnabled = false
+
 
 Tab:CreateToggle({
     Name = "NoClip",
     CurrentValue = false,
-    Flag = "Toggle1215",
     Callback = function(Value)
-        RunService.RenderStepped:Connect(function()
-            local character = LocalPlayer.Character
-            if character then
-                local head = character:FindFirstChild("Head")
-                local torso = character:FindFirstChild("Torso")
-                if head then head.CanCollide = not Value end
-                if torso then torso.CanCollide = not Value end
-            end
-        end)
+        NoClipEnabled = Value
     end
 })
+
+RunService.Stepped:Connect(function()
+	if NoClipEnabled then
+		local char = LocalPlayer.Character
+		if char then
+			for _, part in ipairs(char:GetDescendants()) do
+				if part:IsA("BasePart") and part.CanCollide == true then
+					part.CanCollide = false
+				end
+			end
+		end
+	end
+end)
+
 
 Tab:CreateButton({
     Name = "Force Remove hacks",
@@ -141,198 +169,184 @@ Tab1:CreateSection("AimBot")
 
 
 
-local WallCheck = true
+-- ======= Aimbot Section =======
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+-- Settings
 local AimbotFOV = 100
 local AimbotKey = Enum.KeyCode.E
 local AimbotToggleMode = false
 local AimbotActive = false
+local WallCheck = true
+local TeamCheck = true
+local HitPart = "Head"
+local PredictionEnabled = true
+local PredictionStrength = 0.12
+local AutoFireEnabled = false
+local ShowFOVCircle = true
 
-
+-- Drawing FOV circle
 local FOVCircle = Drawing.new("Circle")
 FOVCircle.Thickness = 2
 FOVCircle.Filled = false
-FOVCircle.Radius = AimbotFOV
 FOVCircle.Color = Color3.fromRGB(255, 255, 255)
 FOVCircle.Transparency = 1
-FOVCircle.Visible = true
+FOVCircle.Visible = ShowFOVCircle
 
-
+-- Update FOV circle
 RunService.RenderStepped:Connect(function()
     local mouse = UserInputService:GetMouseLocation()
     FOVCircle.Position = Vector2.new(mouse.X, mouse.Y)
     FOVCircle.Radius = AimbotFOV
+    FOVCircle.Visible = ShowFOVCircle
 end)
 
-local IsAimbotOn = false
-
-local FOVVisible = false
-
-Tab1:CreateToggle({
-    Name = "Enable Aimbot",
-    CurrentValue = false,
-    Flag = "Toggle_Aimbot",
-    Callback = function(Value)
-        IsAimbotOn = Value
-    end
-})
-
-Tab1:CreateToggle({
-    Name = "Show FOV Circle",
-    CurrentValue = true,
-    Flag = "FOVVisibilityToggle",
-    Callback = function(Value)
-        FOVVisible = Value
-        FOVCircle.Visible = Value
-    end
-})
-
-
-
-Tab1:CreateToggle({
-    Name = "Wall Check",
-    CurrentValue = true,
-    Flag = "WallCheckToggle",
-    Callback = function(Value)
-        WallCheck = Value
-    end
-})
-
-Tab1:CreateSlider({
-    Name = "Aimbot FOV",
-    Range = {50, 2000},
-    Increment = 10,
-    Suffix = "px",
-    CurrentValue = 100,
-    Flag = "AimbotFOVSlider",
-    Callback = function(Value)
-        AimbotFOV = Value
-    end
-})
-
-Tab1:CreateDropdown({
-    Name = "Aimbot Keybind",
-    Options = {"E", "Q", "LeftShift", "F"},
-    CurrentOption = {"E"},
-    Callback = function(Option)
-        local selected = Option[1]
-        if selected == "RightMouseButton" then
-            AimbotKey = "MouseButton2"
-        else
-            AimbotKey = Enum.KeyCode[selected]
+-- Check if game is FFA (everyone on the same team or no teams)
+local function IsFFA()
+    local teams = {}
+    for _, player in pairs(Players:GetPlayers()) do
+        if player.Team then
+            teams[player.Team] = true
         end
     end
-})
-
-
-Tab1:CreateToggle({
-    Name = "Toggle or Hold (Toggle = On)",
-    CurrentValue = false,
-    Flag = "ToggleHoldSwitch",
-    Callback = function(Value)
-        AimbotToggleMode = Value
+    local teamCount = 0
+    for _ in pairs(teams) do
+        teamCount = teamCount + 1
     end
-})
+    return teamCount <= 1 -- One or zero teams = FFA
+end
 
+local ffaMode = IsFFA()
 
-Tab1:CreateDropdown({
-    Name = "AimBotHitPart",
-    Options = {"Head", "Torso"},
-    CurrentOption = {"Torso"},
-    Callback = function(Options)
-        HitPart = Options[1]
+for _, player in pairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        -- If not FFA and team check enabled, filter out same team
+        if not (TeamCheck and not ffaMode and player.Team == LocalPlayer.Team) then
+            -- continue with aimbot targeting logic here
+        end
     end
-})
+end
 
-local isHoldingRightClick = false
+
+-- Wall check function: returns true if line of sight is clear
+local function IsVisible(targetPart)
+    local camera = workspace.CurrentCamera
+    local origin = camera.CFrame.Position
+    local direction = (targetPart.Position - origin)
+
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    raycastParams.IgnoreWater = true
+
+    local raycastResult = workspace:Raycast(origin, direction, raycastParams)
+
+    if raycastResult then
+        -- Check if the hit instance belongs to the target's character
+        if raycastResult.Instance:IsDescendantOf(targetPart.Parent) then
+            return true -- target is visible
+        else
+            return false -- something else is blocking
+        end
+    else
+        -- No obstruction detected
+        return true
+    end
+end
+
+-- Find closest valid target within FOV and visible (if wall check enabled)
 local function GetClosestPlayer()
-    local closestPlayer = nil
-    local shortestDistance = AimbotFOV
     local mousePos = UserInputService:GetMouseLocation()
+    local shortestDistance = AimbotFOV
+    local closestPlayer = nil
 
-    for _, player in ipairs(Players:GetPlayers()) do
+    for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local partToAim = player.Character:FindFirstChild(HitPart == "Head" and "Head" or "HumanoidRootPart")
-            if partToAim then
-                local screenPos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(partToAim.Position)
-                if onScreen then
-                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
-                    if dist < shortestDistance then
-                        if not WallCheck or IsVisible(partToAim) then
-                            closestPlayer = player
-                            shortestDistance = dist
+            if not TeamCheck or player.Team ~= LocalPlayer.Team then
+                local targetPart = player.Character:FindFirstChild(HitPart)
+                if targetPart then
+                    local screenPos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(targetPart.Position)
+                    if onScreen then
+                        local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+                        if dist <= shortestDistance then
+                            if WallCheck then
+                                if IsVisible(targetPart) then
+                                    shortestDistance = dist
+                                    closestPlayer = player
+                                end
+                            else
+                                shortestDistance = dist
+                                closestPlayer = player
+                            end
                         end
                     end
                 end
             end
         end
     end
+
     return closestPlayer
 end
 
-
-local function IsVisible(targetPart)
-	local origin = workspace.CurrentCamera.CFrame.Position
-	local direction = (targetPart.Position - origin).Unit * 1000
-	local raycastParams = RaycastParams.new()
-	raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
-	raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-	raycastParams.IgnoreWater = true
-
-	local result = workspace:Raycast(origin, direction, raycastParams)
-	if result then
-		return result.Instance:IsDescendantOf(targetPart.Parent)
-	end
-	return false
-end
-
-
+-- Aim at player with optional prediction
 local function AimAtPlayer(player)
-    local character = player.Character
-    if not character or character.Humanoid.Health == 0 then return end
+    if not player.Character then return end
+    local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+    if not humanoid or humanoid.Health <= 0 then return end
 
-    local partToAimAt = (HitPart == "Head")
-        and character:FindFirstChild("Head")
-        or character:FindFirstChild("HumanoidRootPart")
+    local targetPart = player.Character:FindFirstChild(HitPart)
+    if not targetPart then return end
 
-    if partToAimAt and (not WallCheck or IsVisible(partToAimAt)) then
-        local camera = workspace.CurrentCamera
-        local partPosition = partToAimAt.Position
-        camera.CFrame = CFrame.new(camera.CFrame.Position, partPosition)
+    if WallCheck and not IsVisible(targetPart) then
+        return -- Don't aim if target is behind wall
+    end
+
+    -- Prediction calculation
+    local predictedPos = targetPart.Position
+    if PredictionEnabled and player.Character:FindFirstChild("HumanoidRootPart") then
+        local velocity = player.Character.HumanoidRootPart.Velocity
+        predictedPos = predictedPos + velocity * PredictionStrength
+    end
+
+    -- Set camera to look at predicted position
+    local camera = workspace.CurrentCamera
+    camera.CFrame = CFrame.new(camera.CFrame.Position, predictedPos)
+
+    -- Auto fire logic
+    if AutoFireEnabled then
+        local mousePos = UserInputService:GetMouseLocation()
+        -- Fire only if target is visible and within FOV
+        if IsVisible(targetPart) then
+            -- Press left mouse button down and up quickly to simulate click
+            VirtualInputManager:SendMouseButtonEvent(mousePos.X, mousePos.Y, 0, true, game, 0)
+            task.wait(0.05)
+            VirtualInputManager:SendMouseButtonEvent(mousePos.X, mousePos.Y, 0, false, game, 0)
+        end
     end
 end
 
-UserInputService.InputBegan:Connect(function(input, gpe)
-	if gpe then return end
-
-	if input.KeyCode == AimbotKey then
-		if AimbotToggleMode then
-			AimbotActive = not AimbotActive
-		else
-			AimbotActive = true
-		end
-	end
+-- Input listeners
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == AimbotKey then
+        if AimbotToggleMode then
+            AimbotActive = not AimbotActive
+        else
+            AimbotActive = true
+        end
+    end
 end)
 
-
-
-
-UserInputService.InputEnded:Connect(function(input, gpe)
-	if gpe then return end
-
-	if input.KeyCode == AimbotKey and not AimbotToggleMode then
-		AimbotActive = false
-	end
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == AimbotKey and not AimbotToggleMode then
+        AimbotActive = false
+    end
 end)
 
-
-
-
+-- Main aimbot loop
 RunService.RenderStepped:Connect(function()
-    local mouse = UserInputService:GetMouseLocation()
-    FOVCircle.Position = Vector2.new(mouse.X, mouse.Y)
-    FOVCircle.Radius = AimbotFOV
-    FOVCircle.Visible = FOVVisible
-    if IsAimbotOn and AimbotActive then
+    if AimbotActive then
         local target = GetClosestPlayer()
         if target then
             AimAtPlayer(target)
@@ -340,6 +354,22 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
+
+-- UI Toggles & Sliders (example, add to your UI creation section)
+Tab1:CreateToggle({ Name = "Enable Aimbot", CurrentValue = false, Callback = function(Value) IsAimbotOn = Value end })
+Tab1:CreateToggle({ Name = "Wall Check", CurrentValue = true, Callback = function(Value) WallCheck = Value end })
+Tab1:CreateToggle({ Name = "Ignore Teammates", CurrentValue = true, Callback = function(Value) TeamCheck = Value end })
+Tab1:CreateToggle({ Name = "Enable Prediction", CurrentValue = true, Callback = function(Value) PredictionEnabled = Value end })
+Tab1:CreateSlider({ Name = "Prediction Strength", Range = {0.01, 1}, Increment = 0.01, CurrentValue = 0.12, Callback = function(Value) PredictionStrength = Value end })
+Tab1:CreateSlider({ Name = "Aimbot FOV", Range = {50, 2000}, Increment = 10, CurrentValue = 100, Callback = function(Value) AimbotFOV = Value end })
+Tab1:CreateDropdown({ Name = "Hit Part", Options = {"Head", "Torso"}, CurrentOption = {"Head"}, Callback = function(opt) HitPart = opt[1] end })
+Tab1:CreateDropdown({ Name = "Aimbot Keybind", Options = {"E", "Q", "F", "LeftShift"}, CurrentOption = {"E"}, Callback = function(opt) AimbotKey = Enum.KeyCode[opt[1]] end })
+Tab1:CreateToggle({ Name = "Toggle or Hold", CurrentValue = false, Callback = function(Value) AimbotToggleMode = Value end })
+Tab1:CreateToggle({ Name = "Auto Fire / Triggerbot", CurrentValue = false, Callback = function(Value) AutoFireEnabled = Value end })
+Tab1:CreateToggle({ Name = "Show FOV Circle", CurrentValue = true, Callback = function(Value) 
+    ShowFOVCircle = Value
+    FOVCircle.Visible = Value
+end })
 
 
 
