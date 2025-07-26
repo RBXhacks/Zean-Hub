@@ -199,7 +199,7 @@ Tab1:CreateToggle({
 
 Tab1:CreateSlider({
     Name = "Aimbot FOV",
-    Range = {50, 500},
+    Range = {50, 2000},
     Increment = 10,
     Suffix = "px",
     CurrentValue = 100,
