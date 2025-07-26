@@ -1,0 +1,498 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+--Sigma boy
+
+--Main
+
+
+
+local Window = Rayfield:CreateWindow({
+    Name = "Zean Hub",
+    Icon = 0,
+    LoadingTitle = "Zean Hub",
+    LoadingSubtitle = "Credit: Sirius",
+    Theme = "AmberGlow",
+    DisableRayfieldPrompts = false,
+    DisableBuildWarnings = false,
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = nil,
+        FileName = "Big Hub"
+    },
+    Discord = {
+        Enabled = false,
+        Invite = "https://discord.gg/W6gKcTsP",
+        RememberJoins = true
+    },
+    KeySystem = true,
+    KeySettings = {
+        Title = "This legendary script needs key",
+        Subtitle = "GIMME KEYYYY",
+        Note = "Go to: https://link-hub.net/1374844/iz0O2hgTBzfy",
+        FileName = "Key",
+        SaveKey = false,
+        GrabKeyFromSite = true,
+        Key = {"var192613013123"}
+    }
+})
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local char = LocalPlayer.Character
+local hum = char and char:FindFirstChildOfClass("Humanoid") or nil
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local Tab = Window:CreateTab("Main", 4483362458)
+local Tab1 = Window:CreateTab("Misc", 4483362458)
+
+Tab:CreateSection("Main")
+
+Tab:CreateSlider({
+    Name = "JumpPower",
+    Range = {0, 500},
+    Increment = 10,
+    Suffix = "JumpPower",
+    CurrentValue = 10,
+    Flag = "Slider1",
+    Callback = function(Value)
+        if hum then hum.JumpPower = Value 
+
+	if hum.JumpPower ~= Value then
+		while wait() do
+			hum.JumpPower = Value 
+		end
+		end
+	end
+    end
+})
+
+Tab:CreateSlider({
+    Name = "WalkSpeed",
+    Range = {0, 500},
+    Increment = 10,
+    Suffix = "WalkSpeed",
+    CurrentValue = 10,
+    Flag = "Slider2",
+    Callback = function(Value)
+        if hum then hum.WalkSpeed = Value end
+
+	if hum.WalkSpeed ~= Value then
+		while wait() do
+			hum.WalkSpeed = Value 
+		end
+	end
+    end
+})
+
+Tab:CreateToggle({
+    Name = "NoClip",
+    CurrentValue = false,
+    Flag = "Toggle1215",
+    Callback = function(Value)
+        RunService.RenderStepped:Connect(function()
+            local character = LocalPlayer.Character
+            if character then
+                local head = character:FindFirstChild("Head")
+                local torso = character:FindFirstChild("Torso")
+                if head then head.CanCollide = not Value end
+                if torso then torso.CanCollide = not Value end
+            end
+        end)
+    end
+})
+
+Tab:CreateButton({
+    Name = "Force Remove hacks",
+    Callback = function()
+        Rayfield:Destroy()
+    end
+})
+
+Tab1:CreateSection("Chat")
+Tab1:CreateInput({
+    Name = "Chat",
+    CurrentValue = "",
+    PlaceholderText = "Put text here",
+    RemoveTextAfterFocusLost = false,
+    Flag = "Input231",
+    Callback = function(Text)
+        local TextChatService = game:GetService("TextChatService")
+        TextChatService.TextChannels.RBXGeneral:SendAsync(Text)
+    end
+})
+
+Tab1:CreateInput({
+    Name = "Kick Player",
+    CurrentValue = "",
+    PlaceholderText = "Put text here",
+    RemoveTextAfterFocusLost = false,
+    Flag = "InputKick",
+    Callback = function(Text)
+        Players:WaitForChild(Text):Kick("Your a bitch frfr")
+    end
+})
+
+
+
+-- AimBot Section
+Tab1:CreateSection("AimBot")
+
+
+
+
+local WallCheck = true
+local AimbotFOV = 100
+local AimbotKey = Enum.KeyCode.E
+local AimbotToggleMode = false
+local AimbotActive = false
+
+
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Thickness = 2
+FOVCircle.Filled = false
+FOVCircle.Radius = AimbotFOV
+FOVCircle.Color = Color3.fromRGB(255, 255, 255)
+FOVCircle.Transparency = 1
+FOVCircle.Visible = true
+
+
+RunService.RenderStepped:Connect(function()
+    local mouse = UserInputService:GetMouseLocation()
+    FOVCircle.Position = Vector2.new(mouse.X, mouse.Y)
+    FOVCircle.Radius = AimbotFOV
+end)
+
+local IsAimbotOn = false
+
+local FOVVisible = false
+
+Tab1:CreateToggle({
+    Name = "Enable Aimbot",
+    CurrentValue = false,
+    Flag = "Toggle_Aimbot",
+    Callback = function(Value)
+        IsAimbotOn = Value
+    end
+})
+
+Tab1:CreateToggle({
+    Name = "Show FOV Circle",
+    CurrentValue = true,
+    Flag = "FOVVisibilityToggle",
+    Callback = function(Value)
+        FOVVisible = Value
+        FOVCircle.Visible = Value
+    end
+})
+
+
+
+Tab1:CreateToggle({
+    Name = "Wall Check",
+    CurrentValue = true,
+    Flag = "WallCheckToggle",
+    Callback = function(Value)
+        WallCheck = Value
+    end
+})
+
+Tab1:CreateSlider({
+    Name = "Aimbot FOV",
+    Range = {50, 500},
+    Increment = 10,
+    Suffix = "px",
+    CurrentValue = 100,
+    Flag = "AimbotFOVSlider",
+    Callback = function(Value)
+        AimbotFOV = Value
+    end
+})
+
+Tab1:CreateDropdown({
+    Name = "Aimbot Keybind",
+    Options = {"E", "Q", "LeftShift", "F"},
+    CurrentOption = {"E"},
+    Callback = function(Option)
+        local selected = Option[1]
+        if selected == "RightMouseButton" then
+            AimbotKey = "MouseButton2"
+        else
+            AimbotKey = Enum.KeyCode[selected]
+        end
+    end
+})
+
+
+Tab1:CreateToggle({
+    Name = "Toggle or Hold (Toggle = On)",
+    CurrentValue = false,
+    Flag = "ToggleHoldSwitch",
+    Callback = function(Value)
+        AimbotToggleMode = Value
+    end
+})
+
+
+Tab1:CreateDropdown({
+    Name = "AimBotHitPart",
+    Options = {"Head", "Torso"},
+    CurrentOption = {"Torso"},
+    Callback = function(Options)
+        HitPart = Options[1]
+    end
+})
+
+local isHoldingRightClick = false
+local function GetClosestPlayer()
+    local closestPlayer = nil
+    local shortestDistance = AimbotFOV
+    local mousePos = UserInputService:GetMouseLocation()
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local partToAim = player.Character:FindFirstChild(HitPart == "Head" and "Head" or "HumanoidRootPart")
+            if partToAim then
+                local screenPos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(partToAim.Position)
+                if onScreen then
+                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+                    if dist < shortestDistance then
+                        if not WallCheck or IsVisible(partToAim) then
+                            closestPlayer = player
+                            shortestDistance = dist
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return closestPlayer
+end
+
+
+local function IsVisible(targetPart)
+	local origin = workspace.CurrentCamera.CFrame.Position
+	local direction = (targetPart.Position - origin).Unit * 1000
+	local raycastParams = RaycastParams.new()
+	raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+	raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+	raycastParams.IgnoreWater = true
+
+	local result = workspace:Raycast(origin, direction, raycastParams)
+	if result then
+		return result.Instance:IsDescendantOf(targetPart.Parent)
+	end
+	return false
+end
+
+
+local function AimAtPlayer(player)
+    local character = player.Character
+    if not character or character.Humanoid.Health == 0 then return end
+
+    local partToAimAt = (HitPart == "Head")
+        and character:FindFirstChild("Head")
+        or character:FindFirstChild("HumanoidRootPart")
+
+    if partToAimAt and (not WallCheck or IsVisible(partToAimAt)) then
+        local camera = workspace.CurrentCamera
+        local partPosition = partToAimAt.Position
+        camera.CFrame = CFrame.new(camera.CFrame.Position, partPosition)
+    end
+end
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+
+	if input.KeyCode == AimbotKey then
+		if AimbotToggleMode then
+			AimbotActive = not AimbotActive
+		else
+			AimbotActive = true
+		end
+	end
+end)
+
+
+
+
+UserInputService.InputEnded:Connect(function(input, gpe)
+	if gpe then return end
+
+	if input.KeyCode == AimbotKey and not AimbotToggleMode then
+		AimbotActive = false
+	end
+end)
+
+
+
+
+RunService.RenderStepped:Connect(function()
+    local mouse = UserInputService:GetMouseLocation()
+    FOVCircle.Position = Vector2.new(mouse.X, mouse.Y)
+    FOVCircle.Radius = AimbotFOV
+    FOVCircle.Visible = FOVVisible
+    if IsAimbotOn and AimbotActive then
+        local target = GetClosestPlayer()
+        if target then
+            AimAtPlayer(target)
+        end
+    end
+end)
+
+
+
+
+-- ESP Section
+local espEnabled = false
+
+local function usesTeams()
+    return game:GetService("Teams") and #game:GetService("Teams"):GetTeams() > 1
+end
+
+local function createESP(player)
+    if player == LocalPlayer then return end
+    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
+
+    local character = player.Character
+    local existing = character:FindFirstChild("ESPHighlight")
+    if existing then existing:Destroy() end
+
+    local isTeammate = usesTeams() and player.Team == LocalPlayer.Team
+    local fillColor = isTeammate and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "ESPHighlight"
+    highlight.FillColor = fillColor
+    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+    highlight.FillTransparency = 0.5
+    highlight.OutlineTransparency = 0
+    highlight.Adornee = character
+    highlight.Parent = character
+
+    local head = character:FindFirstChild("Head")
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if head and not head:FindFirstChild("ESPBillboard") then
+        local billboard = Instance.new("BillboardGui", head)
+        billboard.Name = "ESPBillboard"
+        billboard.AlwaysOnTop = true
+        billboard.Size = UDim2.new(0, 100, 0, 30)
+        billboard.StudsOffset = Vector3.new(0, 2.5, 0)
+        billboard.Adornee = head
+
+        local textLabel = Instance.new("TextLabel", billboard)
+        textLabel.Size = UDim2.new(1, 0, 0.5, 0)
+        textLabel.Position = UDim2.new(0, 0, 0, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextColor3 = fillColor
+        textLabel.TextScaled = true
+        textLabel.Font = Enum.Font.SourceSansBold
+        textLabel.TextStrokeTransparency = 0.5
+
+        local healthBar = Instance.new("Frame", billboard)
+        healthBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+        healthBar.BorderSizePixel = 0
+        healthBar.Position = UDim2.new(0, 0, 0.5, 0)
+        healthBar.Size = UDim2.new(1, 0, 0.5, 0)
+
+        RunService.RenderStepped:Connect(function()
+            if player.Character and humanoid and player.Character:FindFirstChild("HumanoidRootPart") then
+                local distance = math.floor((player.Character.HumanoidRootPart.Position - workspace.CurrentCamera.CFrame.Position).Magnitude)
+                textLabel.Text = string.format("%s [%dm]", player.Name, distance)
+
+                local healthPercent = humanoid.Health / humanoid.MaxHealth
+                healthBar.Size = UDim2.new(healthPercent, 0, 0.5, 0)
+                healthBar.BackgroundColor3 = Color3.fromRGB(255 * (1 - healthPercent), 255 * healthPercent, 0)
+            end
+        end)
+    end
+end
+
+local function updateESPColor(player)
+    if player == LocalPlayer then return end
+    local char = player.Character
+    if not char then return end
+
+    local highlight = char:FindFirstChild("ESPHighlight")
+    local head = char:FindFirstChild("Head")
+    local billboard = head and head:FindFirstChild("ESPBillboard")
+    local label = billboard and billboard:FindFirstChild("ESPLabel")
+
+    if highlight then
+        local fillColor = usesTeams() and player.Team == LocalPlayer.Team and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+        highlight.FillColor = fillColor
+        if label then
+            label.TextColor3 = fillColor
+        end
+    end
+end
+
+local function _Sp432()
+    for _, pl_r in ipairs(Players:GetPlayers()) do
+        if pl_r.Character and pl_r ~= LocalPlayer then
+            createESP(pl_r)
+        end
+    end
+end
+
+local function _E()
+    for _, v in ipairs(Players:GetPlayers()) do
+        local char = v.Character
+        if char then
+            local highlight = char:FindFirstChild("ESPHighlight")
+            local head = char:FindFirstChild("Head")
+            if highlight then highlight:Destroy() end
+            if head then
+                local billboard = head:FindFirstChild("ESPBillboard")
+                if billboard then billboard:Destroy() end
+            end
+        end
+    end
+end
+
+-- Auto-apply ESP for new players and respawns
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        if espEnabled then
+            task.wait(1)
+            createESP(player)
+        end
+    end)
+    player:GetPropertyChangedSignal("Team"):Connect(function()
+        if espEnabled then
+            updateESPColor(player)
+        end
+    end)
+end)
+
+for _, player in ipairs(Players:GetPlayers()) do
+    player.CharacterAdded:Connect(function()
+        if espEnabled then
+            task.wait(1)
+            createESP(player)
+        end
+    end)
+    player:GetPropertyChangedSignal("Team"):Connect(function()
+        if espEnabled then
+            updateESPColor(player)
+        end
+    end)
+end
+
+-- Toggle ESP
+Tab1:CreateSection("ESP")
+Tab1:CreateToggle({
+    Name = "ESP",
+    CurrentValue = false,
+    Flag = "ToggleESP",
+    Callback = function(Value)
+        espEnabled = Value
+        if Value then
+            _Sp432()
+        else
+            _E()
+        end
+    end
+})
+
+Rayfield:LoadConfiguration()
