@@ -129,6 +129,93 @@ RunService.Stepped:Connect(function()
 	end
 end)
 
+local FlyEnabled = false
+local FlySpeed = 50
+local BodyGyro, BodyVelocity
+
+Tab:CreateToggle({
+    Name = "Fly (Hold WASD, Space, Ctrl)",
+    CurrentValue = false,
+    Callback = function(Value)
+        FlyEnabled = Value
+        local char = GetLocalCharacter()
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+
+        if Value and hrp then
+            -- Start flying
+            BodyGyro = Instance.new("BodyGyro")
+            BodyGyro.P = 9e4
+            BodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+            BodyGyro.CFrame = hrp.CFrame
+            BodyGyro.Parent = hrp
+
+            BodyVelocity = Instance.new("BodyVelocity")
+            BodyVelocity.Velocity = Vector3.new(0, 0, 0)
+            BodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            BodyVelocity.Parent = hrp
+
+            -- Disable gravity from affecting the player
+            local hum = GetLocalHumanoid()
+            if hum then hum.PlatformStand = true end
+        else
+            -- Stop flying
+            if BodyGyro then BodyGyro:Destroy() end
+            if BodyVelocity then BodyVelocity:Destroy() end
+
+            local hum = GetLocalHumanoid()
+            if hum then hum.PlatformStand = false end
+        end
+    end
+})
+
+
+Tab:CreateSlider({
+    Name = "Fly Speed",
+    Range = {10, 300},
+    Increment = 5,
+    CurrentValue = 50,
+    Callback = function(Value)
+        FlySpeed = Value
+    end
+})
+
+RunService.RenderStepped:Connect(function()
+    if FlyEnabled and LocalPlayer and workspace.CurrentCamera then
+        local char = GetLocalCharacter()
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if not hrp or not BodyVelocity or not BodyGyro then return end
+
+        local cam = workspace.CurrentCamera
+        local direction = Vector3.zero
+
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+            direction = direction + cam.CFrame.LookVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+            direction = direction - cam.CFrame.LookVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+            direction = direction - cam.CFrame.RightVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+            direction = direction + cam.CFrame.RightVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+            direction = direction + cam.CFrame.UpVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+            direction = direction - cam.CFrame.UpVector
+        end
+
+        if direction.Magnitude > 0 then
+            direction = direction.Unit * FlySpeed
+        end
+
+        BodyVelocity.Velocity = direction
+        BodyGyro.CFrame = cam.CFrame
+    end
+end)
+
 
 Tab:CreateButton({
     Name = "Force Remove hacks",
