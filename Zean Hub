@@ -1,17 +1,16 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
---Sigma boy
-
---Main
-
-
+local raw = game:HttpGet("https://pastebin.com/raw/36Ck4QeD")
+print("➡️ Raw fetchedKey:", raw)
+local fetchedKey = raw:gsub("^%s*(.-)%s*$", "%1")
+print("➡️ Trimmed fetchedKey:", fetchedKey)
 
 local Window = Rayfield:CreateWindow({
     Name = "Zean Hub",
     Icon = 0,
     LoadingTitle = "Zean Hub",
     LoadingSubtitle = "Credit: Sirius",
-    Theme = "AmberGlow",
+    Theme = "Ocean",
     DisableRayfieldPrompts = false,
     DisableBuildWarnings = false,
     ConfigurationSaving = {
@@ -26,15 +25,16 @@ local Window = Rayfield:CreateWindow({
     },
     KeySystem = true,
     KeySettings = {
-        Title = "This legendary script needs key",
-        Subtitle = "GIMME KEYYYY",
-        Note = "Go to: https://link-hub.net/1374844/iz0O2hgTBzfy",
-        FileName = "Key",
+        Title = "Zean Hub Key System",
+        Subtitle = "Enter the key to unlock script",
+        Note = "Pastebin‑based key",
+        FileName = "ZeanHubKey",
         SaveKey = false,
-        GrabKeyFromSite = true,
-        Key = {"var192613013123"}
+        GrabKeyFromSite = false,
+        Key = { fetchedKey }
     }
 })
+
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
