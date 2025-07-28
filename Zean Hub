@@ -493,6 +493,7 @@ do
 	local nameToggle = false
 	local distanceToggle = false
 	local healthToggle = false
+	local ignoreTeamToggle = false
 
 	local drawings = {}
 
@@ -511,44 +512,45 @@ do
 		local d = drawings[player]
 
 		-- Box
+		d.Box.Visible = false
 		d.Box.Color = Color3.new(1, 1, 1)
 		d.Box.Thickness = 2
 		d.Box.Filled = false
-		d.Box.Visible = false
 
 		-- Tracer
-		d.Tracer.Color = Color3.fromRGB(255, 255, 255)
-		d.Tracer.Thickness = 1
 		d.Tracer.Visible = false
+		d.Tracer.Color = Color3.new(1, 1, 1)
+		d.Tracer.Thickness = 1
 
 		-- Name
-		d.Name.Size = 13
+		d.Name.Visible = false
 		d.Name.Center = true
 		d.Name.Outline = true
-		d.Name.Color = Color3.fromRGB(255, 255, 255)
-		d.Name.Visible = false
+		d.Name.Size = 13
+		d.Name.Color = Color3.new(1, 1, 1)
 
 		-- Distance
-		d.Distance.Size = 13
+		d.Distance.Visible = false
 		d.Distance.Center = true
 		d.Distance.Outline = true
-		d.Distance.Color = Color3.fromRGB(255, 255, 255)
-		d.Distance.Visible = false
+		d.Distance.Size = 12
+		d.Distance.Color = Color3.new(1, 1, 1)
 
-		-- Health
+		-- Health bar
+		d.HealthBar.Visible = false
 		d.HealthBar.Color = Color3.fromRGB(0, 255, 0)
 		d.HealthBar.Thickness = 2
-		d.HealthBar.Visible = false
 
-		d.HealthBG.Color = Color3.fromRGB(0, 0, 0)
-		d.HealthBG.Thickness = 3
+		-- Health background
 		d.HealthBG.Visible = false
+		d.HealthBG.Color = Color3.fromRGB(0, 0, 0)
+		d.HealthBG.Thickness = 4
 	end
 
 	local function removeESPForPlayer(player)
 		if drawings[player] then
 			for _, obj in pairs(drawings[player]) do
-				obj:Remove()
+				if obj then obj:Remove() end
 			end
 			drawings[player] = nil
 		end
@@ -566,91 +568,94 @@ do
 
 		for _, player in pairs(Players:GetPlayers()) do
 			if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-				local hrp = player.Character:FindFirstChild("HumanoidRootPart")
-				local head = player.Character:FindFirstChild("Head")
-				local hum = player.Character:FindFirstChildOfClass("Humanoid")
-
-				if hum and hum.Health > 0 then
-					if not drawings[player] then
-						createESPForPlayer(player)
-					end
-
-					local esp = drawings[player]
-					local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
-					local headPos = Camera:WorldToViewportPoint(hrp.Position + Vector3.new(0, 3, 0))
-					local feetPos = Camera:WorldToViewportPoint(hrp.Position - Vector3.new(0, 3, 0))
-
-					local height = (headPos - feetPos).Magnitude
-					local width = height / 2
-					local x = pos.X - width / 2
-					local y = pos.Y - height / 2
-
-					if onScreen then
-						-- Box
-						if boxToggle then
-							esp.Box.Position = Vector2.new(x, y)
-							esp.Box.Size = Vector2.new(width, height)
-							esp.Box.Visible = true
-						else
-							esp.Box.Visible = false
-						end
-
-						-- Tracer
-						if tracerToggle then
-							esp.Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
-							esp.Tracer.To = Vector2.new(pos.X, pos.Y)
-							esp.Tracer.Visible = true
-						else
-							esp.Tracer.Visible = false
-						end
-
-						-- Name
-						if nameToggle and head then
-							local screenPos = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 0.6, 0))
-							esp.Name.Position = Vector2.new(screenPos.X, screenPos.Y)
-							esp.Name.Text = player.Name
-							esp.Name.Visible = true
-						else
-							esp.Name.Visible = false
-						end
-
-						-- Distance
-						if distanceToggle then
-							local distance = (Camera.CFrame.Position - hrp.Position).Magnitude
-							esp.Distance.Position = Vector2.new(pos.X, pos.Y + height / 2 + 14)
-							esp.Distance.Text = string.format("[%dm]", math.floor(distance))
-							esp.Distance.Visible = true
-						else
-							esp.Distance.Visible = false
-						end
-
-						-- Health Bar
-						if healthToggle then
-							local healthRatio = hum.Health / hum.MaxHealth
-							local barHeight = height
-							local barX = x - 6
-							local barY = y
-							local fillY = barY + (1 - healthRatio) * barHeight
-							local fillHeight = barHeight * healthRatio
-
-							esp.HealthBG.From = Vector2.new(barX, barY)
-							esp.HealthBG.To = Vector2.new(barX, barY + barHeight)
-							esp.HealthBG.Visible = true
-
-							esp.HealthBar.From = Vector2.new(barX, fillY)
-							esp.HealthBar.To = Vector2.new(barX, fillY + fillHeight)
-							esp.HealthBar.Visible = true
-						else
-							esp.HealthBar.Visible = false
-							esp.HealthBG.Visible = false
-						end
-					else
-						for _, obj in pairs(esp) do
+				if ignoreTeamToggle and player.Team == LocalPlayer.Team then
+					if drawings[player] then
+						for _, obj in pairs(drawings[player]) do
 							obj.Visible = false
 						end
 					end
-				else
+					continue
+				end
+
+				local char = player.Character
+				local hrp = char:FindFirstChild("HumanoidRootPart")
+				local hum = char:FindFirstChildOfClass("Humanoid")
+				if not hrp or not hum or hum.Health <= 0 then
 					removeESPForPlayer(player)
+					continue
+				end
+
+				createESPForPlayer(player)
+				local esp = drawings[player]
+
+				local headPos = Camera:WorldToViewportPoint(hrp.Position + Vector3.new(0, 3, 0))
+				local feetPos = Camera:WorldToViewportPoint(hrp.Position - Vector3.new(0, 3, 0))
+				local rootPos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+
+				if not onScreen then
+					for _, obj in pairs(esp) do
+						obj.Visible = false
+					end
+					continue
+				end
+
+				local height = math.abs(headPos.Y - feetPos.Y)
+				local width = height / 2
+				local x = rootPos.X - width / 2
+				local y = rootPos.Y - height / 2
+
+				-- Box
+				if boxToggle then
+					esp.Box.Visible = true
+					esp.Box.Size = Vector2.new(width, height)
+					esp.Box.Position = Vector2.new(x, y)
+				else
+					esp.Box.Visible = false
+				end
+
+				-- Tracer
+				if tracerToggle then
+					esp.Tracer.Visible = true
+					esp.Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+					esp.Tracer.To = Vector2.new(rootPos.X, rootPos.Y)
+				else
+					esp.Tracer.Visible = false
+				end
+
+				-- Name
+				if nameToggle then
+					esp.Name.Visible = true
+					esp.Name.Text = player.Name
+					esp.Name.Position = Vector2.new(rootPos.X, y - 15)
+				else
+					esp.Name.Visible = false
+				end
+
+				-- Distance
+				if distanceToggle then
+					local dist = math.floor((Camera.CFrame.Position - hrp.Position).Magnitude)
+					esp.Distance.Visible = true
+					esp.Distance.Text = "[" .. dist .. "m]"
+					esp.Distance.Position = Vector2.new(rootPos.X, y + height + 2)
+				else
+					esp.Distance.Visible = false
+				end
+
+				-- Health
+				if healthToggle then
+					local healthRatio = hum.Health / hum.MaxHealth
+					local barHeight = height * healthRatio
+
+					esp.HealthBar.Visible = true
+					esp.HealthBar.From = Vector2.new(x - 5, y + height)
+					esp.HealthBar.To = Vector2.new(x - 5, y + height - barHeight)
+
+					esp.HealthBG.Visible = true
+					esp.HealthBG.From = Vector2.new(x - 5, y)
+					esp.HealthBG.To = Vector2.new(x - 5, y + height)
+				else
+					esp.HealthBar.Visible = false
+					esp.HealthBG.Visible = false
 				end
 			else
 				removeESPForPlayer(player)
@@ -661,14 +666,16 @@ do
 	RunService.RenderStepped:Connect(updateESP)
 	Players.PlayerRemoving:Connect(removeESPForPlayer)
 
-	-- Toggle API
-	CleanESP.ToggleMaster = function(v) masterToggle = v end
-	CleanESP.ToggleBoxes = function(v) boxToggle = v end
-	CleanESP.ToggleTracers = function(v) tracerToggle = v end
-	CleanESP.ToggleNames = function(v) nameToggle = v end
-	CleanESP.ToggleDistance = function(v) distanceToggle = v end
-	CleanESP.ToggleHealth = function(v) healthToggle = v end
+	-- Public API
+	CleanESP.ToggleMaster = function(state) masterToggle = state end
+	CleanESP.ToggleBoxes = function(state) boxToggle = state end
+	CleanESP.ToggleTracers = function(state) tracerToggle = state end
+	CleanESP.ToggleNames = function(state) nameToggle = state end
+	CleanESP.ToggleDistance = function(state) distanceToggle = state end
+	CleanESP.ToggleHealth = function(state) healthToggle = state end
+	CleanESP.ToggleIgnoreTeam = function(state) ignoreTeamToggle = state end
 end
+
 
 Tab2:CreateSection("ESP")
 
@@ -677,6 +684,14 @@ Tab2:CreateToggle({
 	CurrentValue = false,
 	Callback = function(Value)
 		CleanESP.ToggleMaster(Value)
+	end
+})
+
+Tab2:CreateToggle({
+	Name = "Ignore Teammates",
+	CurrentValue = false,
+	Callback = function(Value)
+		CleanESP.ToggleIgnoreTeam(Value)
 	end
 })
 
@@ -721,6 +736,7 @@ Tab2:CreateToggle({
 		CleanESP.ToggleHealth(Value)
 	end
 })
+
 
 
 
