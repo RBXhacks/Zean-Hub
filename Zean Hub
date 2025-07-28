@@ -1,8 +1,15 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 
-local fetchedKey = "https://pastebin.com/raw/36Ck4QeD"
+local HttpService = game:GetService("HttpService")
+local fetchedKeyRaw = game:HttpGet("https://pastebin.com/raw/36Ck4QeD")
+local keyList = {}
 
+for key in string.gmatch(fetchedKeyRaw, "[^\r\n]+") do
+    table.insert(keyList, key)
+end
+
+table.insert(keyList, "Nigil")
 
 local Window = Rayfield:CreateWindow({
     Name = "Zean Hub",
@@ -30,7 +37,7 @@ local Window = Rayfield:CreateWindow({
         FileName = "ZeanHubKey",
         SaveKey = false,
         GrabKeyFromSite = false,
-        Key = {fetchedkey, "Nigil"}
+        Key = keyList
     }
 })
 
