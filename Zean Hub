@@ -275,6 +275,7 @@ Tab1:CreateSection("AimBot")
 -- ======= Aimbot Section =======
 local VirtualInputManager = game:GetService("VirtualInputManager")
 
+
 -- Settings
 local AimbotFOV = 100
 local AimbotKey = Enum.KeyCode.E
@@ -283,8 +284,6 @@ local AimbotActive = false
 local WallCheck = true
 local TeamCheck = true
 local HitPart = "Head"
-local PredictionEnabled = true
-local PredictionStrength = 0.12
 local AutoFireEnabled = false
 local ShowFOVCircle = true
 
@@ -296,7 +295,6 @@ FOVCircle.Color = Color3.fromRGB(255, 255, 255)
 FOVCircle.Transparency = 1
 FOVCircle.Visible = ShowFOVCircle
 
--- Update FOV circle
 RunService.RenderStepped:Connect(function()
     local mouse = UserInputService:GetMouseLocation()
     FOVCircle.Position = Vector2.new(mouse.X, mouse.Y)
@@ -304,7 +302,6 @@ RunService.RenderStepped:Connect(function()
     FOVCircle.Visible = ShowFOVCircle
 end)
 
--- Check if game is FFA (everyone on the same team or no teams)
 local function IsFFA()
     local teams = {}
     local playersWithNoTeam = 0
@@ -325,7 +322,6 @@ local function IsFFA()
     return teamCount <= 1 or playersWithNoTeam == #Players:GetPlayers()
 end
 
--- Wall check function: returns true if line of sight is clear
 local function IsVisible(targetPart)
     local camera = workspace.CurrentCamera
     local origin = camera.CFrame.Position
@@ -336,31 +332,24 @@ local function IsVisible(targetPart)
     raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
     raycastParams.IgnoreWater = true
 
-    local raycastResult = workspace:Raycast(origin, direction, raycastParams)
+    local result = workspace:Raycast(origin, direction, raycastParams)
 
-    if raycastResult then
-        if raycastResult.Instance:IsDescendantOf(targetPart.Parent) then
-            return true -- target is visible
-        else
-            return false -- something else is blocking
-        end
+    if result then
+        return result.Instance:IsDescendantOf(targetPart.Parent)
     else
-        return true -- No obstruction detected
+        return true
     end
 end
 
--- Find closest valid target within FOV and visible (if wall check enabled)
 local function GetClosestPlayer()
     local mousePos = UserInputService:GetMouseLocation()
     local shortestDistance = AimbotFOV
     local closestPlayer = nil
 
-    -- Check if the game is FFA
     local ffaMode = IsFFA()
 
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            -- If not FFA and team check enabled, filter out same team
             if not (TeamCheck and not ffaMode and player.Team == LocalPlayer.Team) then
                 local targetPart = player.Character:FindFirstChild(HitPart)
                 if targetPart then
@@ -387,7 +376,7 @@ local function GetClosestPlayer()
     return closestPlayer
 end
 
--- Aim at player with optional prediction
+-- Clean direct aim without prediction
 local function AimAtPlayer(player)
     if not player.Character then return end
     local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
@@ -396,27 +385,14 @@ local function AimAtPlayer(player)
     local targetPart = player.Character:FindFirstChild(HitPart)
     if not targetPart then return end
 
-    if WallCheck and not IsVisible(targetPart) then
-        return -- Don't aim if target is behind wall
-    end
+    if WallCheck and not IsVisible(targetPart) then return end
 
-    -- Prediction calculation
-    local predictedPos = targetPart.Position
-    if PredictionEnabled and player.Character:FindFirstChild("HumanoidRootPart") then
-        local velocity = player.Character.HumanoidRootPart.Velocity
-        predictedPos = predictedPos + velocity * PredictionStrength
-    end
-
-    -- Set camera to look at predicted position
     local camera = workspace.CurrentCamera
-    camera.CFrame = CFrame.new(camera.CFrame.Position, predictedPos)
+    camera.CFrame = CFrame.new(camera.CFrame.Position, targetPart.Position)
 
-    -- Auto fire logic
     if AutoFireEnabled then
         local mousePos = UserInputService:GetMouseLocation()
-        -- Fire only if target is visible and within FOV
         if IsVisible(targetPart) then
-            -- Press left mouse button down and up quickly to simulate click
             VirtualInputManager:SendMouseButtonEvent(mousePos.X, mousePos.Y, 0, true, game, 0)
             task.wait(0.05)
             VirtualInputManager:SendMouseButtonEvent(mousePos.X, mousePos.Y, 0, false, game, 0)
@@ -461,8 +437,6 @@ Tab1:CreateSection("Aimbot Settings")
 
 Tab1:CreateToggle({ Name = "Wall Check", CurrentValue = true, Callback = function(Value) WallCheck = Value end })
 Tab1:CreateToggle({ Name = "Ignore Teammates", CurrentValue = true, Callback = function(Value) TeamCheck = Value end })
-Tab1:CreateToggle({ Name = "Enable Prediction", CurrentValue = true, Callback = function(Value) PredictionEnabled = Value end })
-Tab1:CreateSlider({ Name = "Prediction Strength", Range = {0.01, 1}, Increment = 0.01, CurrentValue = 0.12, Callback = function(Value) PredictionStrength = Value end })
 Tab1:CreateSlider({ Name = "Aimbot FOV", Range = {50, 2000}, Increment = 10, CurrentValue = 100, Callback = function(Value) AimbotFOV = Value end })
 Tab1:CreateDropdown({ Name = "Hit Part", Options = {"Head", "Torso"}, CurrentOption = {"Head"}, Callback = function(opt) HitPart = opt[1] end })
 Tab1:CreateDropdown({ Name = "Aimbot Keybind", Options = {"E", "Q", "F", "LeftShift"}, CurrentOption = {"E"}, Callback = function(opt) AimbotKey = Enum.KeyCode[opt[1]] end })
