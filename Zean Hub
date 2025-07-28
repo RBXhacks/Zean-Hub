@@ -271,6 +271,7 @@ Tab:CreateButton({
 Tab1:CreateSection("AimBot")
 
 
+
 -- ======= Aimbot Section =======
 local VirtualInputManager = game:GetService("VirtualInputManager")
 
@@ -306,29 +307,23 @@ end)
 -- Check if game is FFA (everyone on the same team or no teams)
 local function IsFFA()
     local teams = {}
+    local playersWithNoTeam = 0
+
     for _, player in pairs(Players:GetPlayers()) do
         if player.Team then
             teams[player.Team] = true
+        else
+            playersWithNoTeam = playersWithNoTeam + 1
         end
     end
+
     local teamCount = 0
     for _ in pairs(teams) do
         teamCount = teamCount + 1
     end
-    return teamCount <= 1 -- One or zero teams = FFA
+
+    return teamCount <= 1 or playersWithNoTeam == #Players:GetPlayers()
 end
-
-local ffaMode = IsFFA()
-
-for _, player in pairs(Players:GetPlayers()) do
-    if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        -- If not FFA and team check enabled, filter out same team
-        if not (TeamCheck and not ffaMode and player.Team == LocalPlayer.Team) then
-            -- continue with aimbot targeting logic here
-        end
-    end
-end
-
 
 -- Wall check function: returns true if line of sight is clear
 local function IsVisible(targetPart)
@@ -344,15 +339,13 @@ local function IsVisible(targetPart)
     local raycastResult = workspace:Raycast(origin, direction, raycastParams)
 
     if raycastResult then
-        -- Check if the hit instance belongs to the target's character
         if raycastResult.Instance:IsDescendantOf(targetPart.Parent) then
             return true -- target is visible
         else
             return false -- something else is blocking
         end
     else
-        -- No obstruction detected
-        return true
+        return true -- No obstruction detected
     end
 end
 
@@ -362,9 +355,13 @@ local function GetClosestPlayer()
     local shortestDistance = AimbotFOV
     local closestPlayer = nil
 
+    -- Check if the game is FFA
+    local ffaMode = IsFFA()
+
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            if not TeamCheck or player.Team ~= LocalPlayer.Team then
+            -- If not FFA and team check enabled, filter out same team
+            if not (TeamCheck and not ffaMode and player.Team == LocalPlayer.Team) then
                 local targetPart = player.Character:FindFirstChild(HitPart)
                 if targetPart then
                     local screenPos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(targetPart.Position)
@@ -455,7 +452,6 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
-
 
 -- UI Toggles & Sliders (example, add to your UI creation section)
 
