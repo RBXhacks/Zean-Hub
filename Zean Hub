@@ -1,9 +1,8 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
-local raw = game:HttpGet("https://pastebin.com/raw/36Ck4QeD")
-print("➡️ Raw fetchedKey:", raw)
-local fetchedKey = raw:gsub("^%s*(.-)%s*$", "%1")
-print("➡️ Trimmed fetchedKey:", fetchedKey)
+
+local fetchedKey = "https://pastebin.com/raw/36Ck4QeD"
+
 
 local Window = Rayfield:CreateWindow({
     Name = "Zean Hub",
@@ -27,7 +26,7 @@ local Window = Rayfield:CreateWindow({
     KeySettings = {
         Title = "Zean Hub Key System",
         Subtitle = "Enter the key to unlock script",
-        Note = "Pastebin‑based key",
+        Note = "Get key from our discord server",
         FileName = "ZeanHubKey",
         SaveKey = false,
         GrabKeyFromSite = false,
