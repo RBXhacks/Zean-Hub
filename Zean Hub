@@ -9,7 +9,7 @@ for key in string.gmatch(fetchedKeyRaw, "[^\r\n]+") do
     table.insert(keyList, key)
 end
 
-table.insert(keyList, "Nigil")
+table.insert(keyList)
 
 local Window = Rayfield:CreateWindow({
     Name = "Zean Hub",
@@ -139,88 +139,123 @@ local FlyEnabled = false
 local FlySpeed = 50
 local BodyGyro, BodyVelocity
 
+local function SetupFly()
+	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local hrp = char:WaitForChild("HumanoidRootPart", 5)
+	local hum = char:WaitForChild("Humanoid", 5)
+
+	if FlyEnabled and hrp and hum then
+		-- Clean up any old body movers first
+		if BodyGyro then BodyGyro:Destroy() end
+		if BodyVelocity then BodyVelocity:Destroy() end
+
+		-- Create BodyGyro
+		BodyGyro = Instance.new("BodyGyro")
+		BodyGyro.P = 9e4
+		BodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+		BodyGyro.CFrame = hrp.CFrame
+		BodyGyro.Parent = hrp
+
+		-- Create BodyVelocity
+		BodyVelocity = Instance.new("BodyVelocity")
+		BodyVelocity.Velocity = Vector3.new(0, 0, 0)
+		BodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+		BodyVelocity.Parent = hrp
+
+		-- Disable gravity
+		hum.PlatformStand = true
+	end
+end
+
+local function StopFly()
+	if BodyGyro then BodyGyro:Destroy() BodyGyro = nil end
+	if BodyVelocity then BodyVelocity:Destroy() BodyVelocity = nil end
+
+	local hum = GetLocalHumanoid()
+	if hum then
+		hum.PlatformStand = false
+	end
+end
+
+-- Fly Toggle UI
 Tab:CreateToggle({
-    Name = "Fly (Hold WASD, Space, Ctrl)",
-    CurrentValue = false,
-    Callback = function(Value)
-        FlyEnabled = Value
-        local char = GetLocalCharacter()
-        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	Name = "Fly (Hold WASD, Space, Ctrl)",
+	CurrentValue = false,
+	Callback = function(Value)
+		FlyEnabled = Value
 
-        if Value and hrp then
-            -- Start flying
-            BodyGyro = Instance.new("BodyGyro")
-            BodyGyro.P = 9e4
-            BodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-            BodyGyro.CFrame = hrp.CFrame
-            BodyGyro.Parent = hrp
-
-            BodyVelocity = Instance.new("BodyVelocity")
-            BodyVelocity.Velocity = Vector3.new(0, 0, 0)
-            BodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-            BodyVelocity.Parent = hrp
-
-            -- Disable gravity from affecting the player
-            local hum = GetLocalHumanoid()
-            if hum then hum.PlatformStand = true end
-        else
-            -- Stop flying
-            if BodyGyro then BodyGyro:Destroy() end
-            if BodyVelocity then BodyVelocity:Destroy() end
-
-            local hum = GetLocalHumanoid()
-            if hum then hum.PlatformStand = false end
-        end
-    end
+		if FlyEnabled then
+			SetupFly()
+		else
+			StopFly()
+		end
+	end
 })
 
-
+-- Fly Speed Slider
 Tab:CreateSlider({
-    Name = "Fly Speed",
-    Range = {10, 300},
-    Increment = 5,
-    CurrentValue = 50,
-    Callback = function(Value)
-        FlySpeed = Value
-    end
+	Name = "Fly Speed",
+	Range = {10, 300},
+	Increment = 5,
+	CurrentValue = 50,
+	Callback = function(Value)
+		FlySpeed = Value
+	end
 })
 
+-- Fly Movement
 RunService.RenderStepped:Connect(function()
-    if FlyEnabled and LocalPlayer and workspace.CurrentCamera then
-        local char = GetLocalCharacter()
-        local hrp = char:FindFirstChild("HumanoidRootPart")
-        if not hrp or not BodyVelocity or not BodyGyro then return end
+	if FlyEnabled and LocalPlayer and workspace.CurrentCamera then
+		local char = LocalPlayer.Character
+		if not char then return end
 
-        local cam = workspace.CurrentCamera
-        local direction = Vector3.zero
+		local hrp = char:FindFirstChild("HumanoidRootPart")
+		if not hrp or not BodyVelocity or not BodyGyro then return end
 
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then
-            direction = direction + cam.CFrame.LookVector
-        end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then
-            direction = direction - cam.CFrame.LookVector
-        end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then
-            direction = direction - cam.CFrame.RightVector
-        end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then
-            direction = direction + cam.CFrame.RightVector
-        end
-        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-            direction = direction + cam.CFrame.UpVector
-        end
-        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
-            direction = direction - cam.CFrame.UpVector
-        end
+		local cam = workspace.CurrentCamera
+		local direction = Vector3.zero
 
-        if direction.Magnitude > 0 then
-            direction = direction.Unit * FlySpeed
-        end
+		if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+			direction += cam.CFrame.LookVector
+		end
+		if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+			direction -= cam.CFrame.LookVector
+		end
+		if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+			direction -= cam.CFrame.RightVector
+		end
+		if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+			direction += cam.CFrame.RightVector
+		end
+		if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+			direction += cam.CFrame.UpVector
+		end
+		if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+			direction -= cam.CFrame.UpVector
+		end
 
-        BodyVelocity.Velocity = direction
-        BodyGyro.CFrame = cam.CFrame
-    end
+		if direction.Magnitude > 0 then
+			direction = direction.Unit * FlySpeed
+		end
+
+		BodyVelocity.Velocity = direction
+		BodyGyro.CFrame = cam.CFrame
+	end
 end)
+
+-- Reapply Fly on respawn
+LocalPlayer.CharacterAdded:Connect(function()
+	task.wait(0.5) -- Small delay to let character load
+	if FlyEnabled then
+		SetupFly()
+	end
+end)
+
+-- Clean up on character removing
+LocalPlayer.CharacterRemoving:Connect(function()
+	StopFly()
+end)
+
 
 
 Tab:CreateButton({
@@ -258,8 +293,6 @@ Tab1:CreateInput({
 
 -- AimBot Section
 Tab1:CreateSection("AimBot")
-
-
 
 
 -- ======= Aimbot Section =======
