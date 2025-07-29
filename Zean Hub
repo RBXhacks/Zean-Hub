@@ -75,6 +75,32 @@ local Tab2 = Window:CreateTab("ESP", 4483362458)
 
 Tab:CreateSection("Main")
 
+local DesiredWalkSpeed = 16
+local DesiredJumpPower = 50
+
+Tab:CreateSlider({
+    Name = "WalkSpeed",
+    Range = {0, 500},
+    Increment = 5,
+    Suffix = "speed",
+    CurrentValue = 16,
+    Callback = function(Value)
+        DesiredWalkSpeed = Value
+    end
+})
+
+Tab:CreateSlider({
+    Name = "JumpPower",
+    Range = {0, 500},
+    Increment = 5,
+    Suffix = "jump",
+    CurrentValue = 50,
+    Callback = function(Value)
+        DesiredJumpPower = Value
+    end
+})
+
+
 local NoClipEnabled = false
 
 
