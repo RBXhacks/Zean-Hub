@@ -396,6 +396,8 @@ end)
 
 Tab1:CreateToggle({ Name = "Enable Aimbot", CurrentValue = false, Callback = function(Value) IsAimbotOn = Value end })
 
+
+
 Tab1:CreateSection("Aimbot Settings")
 
 Tab1:CreateToggle({ Name = "Wall Check", CurrentValue = true, Callback = function(Value) WallCheck = Value end })
