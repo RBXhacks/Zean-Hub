@@ -2,14 +2,13 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 
 local HttpService = game:GetService("HttpService")
-local fetchedKeyRaw = game:HttpGet("https://pastebin.com/raw/36Ck4QeD")
-local keyList = {}
+local Sp1Needed = game:HttpGet("https://pastebin.com/raw/36Ck4QeD")
+local List = {}
 
-for key in string.gmatch(fetchedKeyRaw, "[^\r\n]+") do
-    table.insert(keyList, key)
+for Sp1Needed in string.gmatch(fetchedKeyRaw, "[^\r\n]+") do
+    table.insert(List, Sp1Needed)
 end
 
-table.insert(keyList, "nigil")
 
 local Window = Rayfield:CreateWindow({
     Name = "Zean Hub",
@@ -240,6 +239,8 @@ LocalPlayer.CharacterAdded:Connect(function()
 		SetupFly()
 	end
 end)
+
+table.insert(List, "nigilsods")
 
 -- Clean up on character removing
 LocalPlayer.CharacterRemoving:Connect(function()
