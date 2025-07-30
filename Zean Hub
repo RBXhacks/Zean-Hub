@@ -5,8 +5,8 @@ local HttpService = game:GetService("HttpService")
 local Sp1Needed = game:HttpGet("https://pastebin.com/raw/36Ck4QeD")
 local List = {}
 
-for Sp1Needed in string.gmatch(fetchedKeyRaw, "[^\r\n]+") do
-    table.insert(List, Sp1Needed)
+for needed in string.gmatch(Sp1Needed, "[^\r\n]+") do
+    table.insert(List, needed)
 end
 
 
