@@ -36,7 +36,7 @@ local Window = Rayfield:CreateWindow({
         FileName = "ZeanHubKey",
         SaveKey = false,
         GrabKeyFromSite = false,
-        Key = keyList
+        Key = List
     }
 })
 
