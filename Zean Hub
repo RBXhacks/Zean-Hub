@@ -74,56 +74,6 @@ local Tab2 = Window:CreateTab("ESP", 4483362458)
 
 Tab:CreateSection("Main")
 
-local DesiredWalkSpeed = 16
-local DesiredJumpPower = 50
-
-Tab:CreateSlider({
-    Name = "WalkSpeed",
-    Range = {0, 500},
-    Increment = 5,
-    Suffix = "speed",
-    CurrentValue = 16,
-    Callback = function(Value)
-        DesiredWalkSpeed = Value
-    end
-})
-
-Tab:CreateSlider({
-    Name = "JumpPower",
-    Range = {0, 500},
-    Increment = 5,
-    Suffix = "jump",
-    CurrentValue = 50,
-    Callback = function(Value)
-        DesiredJumpPower = Value
-    end
-})
-
-
-local NoClipEnabled = false
-
-
-Tab:CreateToggle({
-    Name = "NoClip",
-    CurrentValue = false,
-    Callback = function(Value)
-        NoClipEnabled = Value
-    end
-})
-
-RunService.Stepped:Connect(function()
-	if NoClipEnabled then
-		local char = LocalPlayer.Character
-		if char then
-			for _, part in ipairs(char:GetDescendants()) do
-				if part:IsA("BasePart") and part.CanCollide == true then
-					part.CanCollide = false
-				end
-			end
-		end
-	end
-end)
-
 local FlyEnabled = false
 local FlySpeed = 50
 local BodyGyro, BodyVelocity
@@ -240,7 +190,6 @@ LocalPlayer.CharacterAdded:Connect(function()
 	end
 end)
 
-table.insert(List, "nigilsods")
 
 -- Clean up on character removing
 LocalPlayer.CharacterRemoving:Connect(function()
